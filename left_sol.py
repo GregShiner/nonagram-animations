@@ -1,6 +1,7 @@
-from typing import Literal
-from manim import BLUE, DOWN, RED, UP, AnimationGroup, Arrow, Indicate, Scene, Text, VGroup
+from typing import Literal, override
+from manim import BLUE, DOWN, RED, UP, AnimationGroup, Arrow, DiGraph, Dot, Graph, Indicate, Scene, Text, VGroup
 
+from placement_tree import PlacementTree, PlacementTreeNode, edge_list_from_nodes, generate_nodes_from_leaves
 from puzzle import LabeledPointer, Line, SegPlacer, SquareState, states_to_cells
 
 UNKNOWN = SquareState.UNKOWN
@@ -89,3 +90,33 @@ class AvoidX(Scene):
         self.play(arrow.animate.next_to(seg_placer.squares_group[7], DOWN), seg_placer.squares_group[6].animated_set_state(EMPTY))
 
         self.play(seg_placer.animate.move_segment_to(2, 7))
+
+class ExampleTree(Scene):
+    def construct(self):
+        permutations = [
+            (0, 2),
+            (0, 3),
+            (0, 4),
+            (1, 3),
+            (1, 4),
+            (2, 4),
+        ]
+        hint = [1, 2]
+        tree = PlacementTree(permutations, hint, length=6, layout_config={"vertex_spacing": (-7, 4)})
+        tree.scale_to_fit_width(14)
+        self.add(tree)
+
+class TestTree(Scene):
+    def construct(self):
+        permutations = [(0, 2)]
+        hint = [1, 2]
+        initial_line = states_to_cells([UNKNOWN for _ in range(6)])
+
+        vertices = generate_nodes_from_leaves(permutations)
+        edges = edge_list_from_nodes(vertices)
+        # vertex_config = {vertex: {"key": vertex, "hint": hint, "initial_line": initial_line} for vertex in vertices}
+        vertex_config = {vertex: {"key": vertex, "hint": hint, "length": 6} for vertex in vertices}
+        # layout = {(None, None): [0, 0, 0], (0, None): [0, -1, 0], (0, 2): [0, -2, 0]}
+        tree = DiGraph(vertices, edges, layout="tree", vertex_type=PlacementTreeNode, root_vertex=vertices[0], vertex_config=vertex_config, layout_config={"vertex_spacing": (2, 2)})
+        self.add(tree)
+

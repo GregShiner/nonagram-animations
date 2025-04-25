@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Generator, List, Literal, Tuple
+from typing import Any, Generator, Iterable, List, Literal, Sequence, Tuple
 from manim import BLUE, DOWN, LEFT, RIGHT, UP, WHITE, Animation, AnimationGroup, Arrow, Circle, Cross, DiGraph, FadeIn, FadeOut, Mobject, ParsableManimColor, Rectangle, Square, Succession, SurroundingRectangle, Text, VGroup, VMobject, np, ManimColor
 from manim.typing import Point3DLike, Vector3D
 
@@ -22,38 +22,12 @@ class Cell(VMobject):
         self.x_mark = Cross(self.background, z_index=2, scale_factor=0.7)
         self.square_mark = gen_square_mark(cell_size)
 
-        self.add(self.background, self.x_mark, self.square_mark)
         self.square_mark.set_opacity(0)
         self.x_mark.set_opacity(0)
 
         self.x_mark.move_to(self.background.get_center())
         self.square_mark.move_to(self.background.get_center())
-
-
-    def set_state_no_animate(self, state: SquareState) -> None:
-        old_state = self.state
-        self.state = state
-
-        # I dont know why these need to be called in this function
-        self.x_mark.move_to(self.background.get_center())
-        self.square_mark.move_to(self.background.get_center())
-
-        match (old_state, state):
-            case (SquareState.UNKOWN, SquareState.FILLED):
-                self.square_mark.set_opacity(1)
-            case (SquareState.UNKOWN, SquareState.EMPTY):
-                self.x_mark.set_opacity(1)
-            case (SquareState.FILLED, SquareState.UNKOWN):
-                self.square_mark.set_opacity(0)
-            case (SquareState.EMPTY, SquareState.UNKOWN):
-                self.x_mark.set_opacity(0)
-            case (SquareState.FILLED, SquareState.EMPTY):
-                self.square_mark.set_opacity(0)
-                self.x_mark.set_opacity(1)
-            case (SquareState.EMPTY, SquareState.FILLED):
-                self.x_mark.set_opacity(0)
-                self.square_mark.set_opacity(1)
-        return None
+        self.add(self.background, self.x_mark, self.square_mark)
 
 
     # This is a sep function from set_state to provide consistent compound animations
@@ -92,8 +66,8 @@ class Cell(VMobject):
         self.state = state
 
         # I dont know why these need to be called in this function
-        self.x_mark.move_to(self.background.get_center())
-        self.square_mark.move_to(self.background.get_center())
+        # self.x_mark.move_to(self.background.get_center())
+        # self.square_mark.move_to(self.background.get_center())
 
         match (old_state, state):
             case (SquareState.UNKOWN, SquareState.FILLED):
@@ -227,7 +201,7 @@ class SegmentSquares(VGroup):
 
 # Mostly just used for demo purposes
 class Line(VMobject):
-    def __init__(self, hint: list[int], initial_line: List[Cell] | None = None, length: int | None = None, cell_size = CELL_SIZE, **kwargs):
+    def __init__(self, hint: List[int], initial_line: List[Cell] | None = None, length: int | None = None, cell_size = CELL_SIZE, **kwargs):
         super().__init__(**kwargs)
         self.hint = hint
         self.hint_obj = Hint(hint, len(hint), True, cell_size)
@@ -250,6 +224,7 @@ class Line(VMobject):
         self.add(self.hint_obj, self.squares_group, self.segment_group, self.xs_group)
 
     def create_segments(self, *segment_lengths: int):
+        segment_lengths = segment_lengths or self.hint
         for length in segment_lengths:
             self.segment_group.add(SegmentSquares(length))
 
@@ -347,7 +322,7 @@ class LabeledPointer(Arrow):
 
 
 class SegPlacer(Line):
-    def __init__(self, hint: list[int], initial_line: List[Cell] | None = None, length: int | None = None, cell_size=CELL_SIZE, **kwargs):
+    def __init__(self, hint: List[int], initial_line: List[Cell] | None = None, length: int | None = None, cell_size=CELL_SIZE, **kwargs):
         super().__init__(hint, initial_line, length, cell_size, **kwargs)
         n_hints: int = len(hint)
         # Calculates n colors by shifting the hue value by 1 / n
@@ -366,14 +341,3 @@ class SegPlacer(Line):
 
         self.add(self.unplaced_box, self.unplaced_label)
 
-
-class PlacementTreeNode(Line):
-    def __init__(self, key: Tuple[int], hint: list[int], initial_line: List[Cell] | None = None, length: int | None = None, cell_size=CELL_SIZE, **kwargs):
-        super().__init__(hint, initial_line, length, cell_size, **kwargs)
-
-class PlacementTree(DiGraph):
-    def __init__(self, initial_line: List[Cell], *args, **kwargs) -> None:
-        # Each vertex in the tree is keyed by a tuple with a length of the number of segments
-        # Each value is the index in the array where the corresponding segment is placed, and None if not placed
-
-        super().__init__(*args, **kwargs)
