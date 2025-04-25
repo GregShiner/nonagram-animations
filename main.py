@@ -7,15 +7,15 @@ class TestCell(Scene):
         cell = Cell()
         self.play(Create(cell))
         self.wait(1)
-        self.play(cell.set_state(SquareState.FILLED), subcaption="Filled")
+        self.play(cell.animated_set_state(SquareState.FILLED), subcaption="Filled")
         self.wait(1)
-        self.play(cell.set_state(SquareState.UNKOWN), subcaption="Unknown")
+        self.play(cell.animated_set_state(SquareState.UNKOWN), subcaption="Unknown")
         self.wait(1)
-        self.play(cell.set_state(SquareState.EMPTY), subcaption="Empty")
+        self.play(cell.animated_set_state(SquareState.EMPTY), subcaption="Empty")
         self.wait(1)
-        self.play(cell.set_state(SquareState.FILLED), subcaption="Filled")
+        self.play(cell.animated_set_state(SquareState.FILLED), subcaption="Filled")
         self.wait(1)
-        self.play(cell.set_state(SquareState.EMPTY), subcaption="Empty")
+        self.play(cell.animated_set_state(SquareState.EMPTY), subcaption="Empty")
 
 
 class TestGrid(Scene):

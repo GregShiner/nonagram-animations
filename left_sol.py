@@ -1,8 +1,11 @@
 from typing import Literal
-from manim import BLUE, DOWN, UP, Arrow, Scene, Text, VGroup
+from manim import BLUE, DOWN, RED, UP, AnimationGroup, Arrow, Indicate, Scene, Text, VGroup
 
-from puzzle import LabeledPointer, Line, SegPlacer, SquareState
+from puzzle import LabeledPointer, Line, SegPlacer, SquareState, states_to_cells
 
+UNKNOWN = SquareState.UNKOWN
+EMPTY = SquareState.EMPTY
+FILLED = SquareState.FILLED
 
 class SegPos(Scene):
     def construct(self):
@@ -54,10 +57,35 @@ class BasicSol(Scene):
         self.add(seg_placer, arrow)
 
         self.play(seg_placer.animate.move_segment_to(0, 0))
-        self.play(arrow.animate.next_to(seg_placer.squares_group[2], DOWN), seg_placer.squares_group[1].set_state(SquareState.EMPTY))
+        self.play(arrow.animate.next_to(seg_placer.squares_group[2], DOWN), seg_placer.squares_group[1].animated_set_state(EMPTY))
 
         self.play(seg_placer.animate.move_segment_to(1, 2))
-        self.play(arrow.animate.next_to(seg_placer.squares_group[5], DOWN), seg_placer.squares_group[4].set_state(SquareState.EMPTY))
+        self.play(arrow.animate.next_to(seg_placer.squares_group[5], DOWN), seg_placer.squares_group[4].animated_set_state(EMPTY))
 
         self.play(seg_placer.animate.move_segment_to(2, 5))
-        self.play(*(seg_placer.squares_group[i].set_state(SquareState.EMPTY) for i in range(8, 10)))
+        self.play(*(seg_placer.squares_group[i].animated_set_state(EMPTY) for i in range(8, 10)))
+
+
+class AvoidX(Scene):
+    def construct(self):
+        segs = [1, 2, 3]
+        line = states_to_cells([*(UNKNOWN for _ in range(3)), EMPTY, *(UNKNOWN for _ in range(6))])
+        seg_placer = SegPlacer(segs, initial_line=line)
+        # Set the x to appear on top of the segments so its still visible
+        seg_placer.squares_group[3].set_z_index(5)
+
+        arrow = LabeledPointer("Next Position")
+        arrow.next_to(seg_placer.squares_group[0], DOWN)
+        self.add(seg_placer, arrow)
+
+        self.play(seg_placer.animate.move_segment_to(0, 0))
+        self.play(arrow.animate.next_to(seg_placer.squares_group[2], DOWN), seg_placer.squares_group[1].animated_set_state(EMPTY))
+
+        self.play(seg_placer.animate.move_segment_to(1, 2))
+        self.play(Indicate(seg_placer.squares_group[3].x_mark, color=RED, scale_factor=1.3))
+        self.play(seg_placer.animate.move_segment_to(1, 3), seg_placer.squares_group[2].animated_set_state(EMPTY))
+        self.play(Indicate(seg_placer.squares_group[3].x_mark, color=RED, scale_factor=1.3))
+        self.play(seg_placer.animate.move_segment_to(1, 4))
+        self.play(arrow.animate.next_to(seg_placer.squares_group[7], DOWN), seg_placer.squares_group[6].animated_set_state(EMPTY))
+
+        self.play(seg_placer.animate.move_segment_to(2, 7))
